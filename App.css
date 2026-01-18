@@ -1,0 +1,144 @@
+/* src/styles/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  background-color: #0d0e12;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+.app-container {
+  display: flex;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+/* Card Style */
+.uni-card {
+  background: #13151a;
+  border: 1px solid #212429;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  max-width: 480px;
+  width: 100%;
+  flex: 1;
+}
+
+.uni-card h2 {
+  margin-top: 0;
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* Inputs */
+.input-group {
+  background: #191b1f;
+  border: 1px solid #1f2229;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.label-text {
+  font-size: 13px;
+  color: #98a1c0;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.uni-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.token-badge {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #2c2f36;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 20px;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #ff007a 0%, #ff4db8 100%);
+  color: white;
+  margin-top: 12px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-small {
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  background: #2c2f36;
+  color: white;
+  border: 1px solid transparent;
+}
+
+.btn-small.active {
+  background: #402030;
+  color: #ff007a;
+  border-color: #ff007a;
+}
+
+.btn-outline-red {
+  background: transparent;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  color: #ff4d4d;
+}
+
+/* Status & Tags */
+.status-active {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.status-loading {
+  color: #ff9800;
+}
+
+.tick-badge {
+  font-size: 12px;
+  background: rgba(76,175,80,0.1);
+  color: #4caf50;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+}

@@ -1,0 +1,60 @@
+/* src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  background-color: #050505;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+.app-container {
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.uni-card {
+  background: #13151a;
+  border: 1px solid #222;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  max-width: 480px;
+  width: 100%;
+}
+
+.uni-card h2 { margin-top: 0; text-align: center; margin-bottom: 24px; }
+
+.input-group { margin-bottom: 16px; }
+.label-text { display: block; margin-bottom: 8px; font-size: 14px; color: #888; }
+
+.uni-input {
+  background: #191b1f;
+  border: 1px solid #333;
+  color: #fff;
+  font-size: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+.uni-input:focus { border-color: #ff007a; }
+
+.btn {
+  width: 100%; padding: 16px; border-radius: 20px; border: none;
+  font-size: 18px; font-weight: 600; cursor: pointer; transition: 0.2s;
+  font-family: inherit;
+}
+.btn-primary { background: #ff007a; color: white; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:disabled { background: #555; cursor: not-allowed; }
+
+.btn-small { padding: 8px 16px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+.btn-small.active { background: #ff007a; color: white; border: none; }
+.btn-outline-red { background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d; }
+
+.status-active { color: #4caf50; font-weight: bold; }
+.status-loading { color: #ff9800; }
+.tick-badge { background: #1a3b1a; color: #4caf50; padding: 4px 8px; border-radius: 6px; font-size: 12px; margin-left: 10px; }
