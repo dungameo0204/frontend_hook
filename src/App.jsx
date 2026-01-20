@@ -1,48 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import './App.css';
-import Navbar from './components/Navbar';
-import Swap from './components/Swap';
+import Navbar from './components/Navbar';       // <--- Import Navbar mới
 import Liquidity from './components/Liquidity';
+import Swap from './components/Swap';
+import './styles/App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('liquidity');
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [provider, setProvider] = useState(null);
+  const [activeTab, setActiveTab] = useState('pools'); // State quản lý tab đang mở
+  const [walletAddress, setWalletAddress] = useState('');
   const [signer, setSigner] = useState(null);
-  
-  // LocalStorage cho Vị thế
-  const [positions, setPositions] = useState(() => {
-      try { const s = localStorage.getItem("positions"); return s ? JSON.parse(s) : []; } 
-      catch { return []; }
-  });
-  useEffect(() => localStorage.setItem("positions", JSON.stringify(positions)), [positions]);
+  const [provider, setProvider] = useState(null);
+  const [positions, setPositions] = useState([]);
+
+  // Load lại vị thế từ LocalStorage khi mở web
+  useEffect(() => {
+    const saved = localStorage.getItem('positions');
+    if (saved) setPositions(JSON.parse(saved));
+  }, []);
 
   const connectWallet = async () => {
     if (window.ethereum) {
-      const p = new ethers.BrowserProvider(window.ethereum);
-      const s = await p.getSigner();
-      const a = await s.getAddress();
-      setProvider(p); setSigner(s); setWalletAddress(a);
-    } else alert("Install MetaMask");
-  };
-
-  useEffect(() => {
-      const init = async () => {
-          if(window.ethereum && (await window.ethereum.request({method:'eth_accounts'})).length > 0) connectWallet();
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        setProvider(provider);
+        setSigner(signer);
+        setWalletAddress(await signer.getAddress());
+      } catch (error) {
+        console.error("User rejected connection");
       }
-      init();
-  }, []);
+    } else {
+      alert("Please install MetaMask!");
+    }
+  };
 
   return (
     <div>
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} walletAddress={walletAddress} onConnect={connectWallet}/>
-      <div className="app-container">
-        {activeTab === 'swap' ? <Swap signer={signer} provider={provider}/> : 
-         <Liquidity signer={signer} provider={provider} walletAddress={walletAddress} onConnect={connectWallet} positions={positions} setPositions={setPositions}/>
-        }
+      {/* Truyền activeTab và setActiveTab vào Navbar */}
+      <Navbar 
+        walletAddress={walletAddress} 
+        onConnect={connectWallet} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+      />
+
+      <div style={{ padding: '40px 20px' }}>
+        {/* Hiển thị nội dung dựa trên Tab đang chọn */}
+        {activeTab === 'pools' ? (
+           <Liquidity 
+             signer={signer} 
+             provider={provider} 
+             walletAddress={walletAddress} 
+             onConnect={connectWallet}
+             positions={positions}
+             setPositions={setPositions}
+           />
+        ) : (
+           <Swap 
+             signer={signer} 
+             provider={provider} 
+           />
+        )}
       </div>
     </div>
   );
 }
+
 export default App;
