@@ -10,10 +10,13 @@ const Swap = ({ signer, provider }) => {
   const [currentTick, setCurrentTick] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // --- LOGIC GIỮ NGUYÊN ---
   const getSortedTokens = () => {
     const tA = ADDRESSES.TOKEN_A;
     const tB = ADDRESSES.TOKEN_B;
-    return tA.toLowerCase() < tB.toLowerCase() ? { currency0: tA, currency1: tB, isALess: true } : { currency0: tB, currency1: tA, isALess: false };
+    return tA.toLowerCase() < tB.toLowerCase() 
+        ? { currency0: tA, currency1: tB, isALess: true } 
+        : { currency0: tB, currency1: tA, isALess: false };
   };
 
   useEffect(() => {
@@ -27,23 +30,31 @@ const Swap = ({ signer, provider }) => {
         } catch (e) {}
     };
     fetchTick();
-    setInterval(fetchTick, 5000);
+    const interval = setInterval(fetchTick, 5000);
+    return () => clearInterval(interval);
   }, [provider]);
 
   useEffect(() => {
     if(currentTick===null || !amount) return;
     const price = Math.pow(1.0001, currentTick);
     const val = parseFloat(amount);
-    const { isALess } = getSortedTokens();
     
+    // Logic tính giá đơn giản (để hiển thị ước tính)
     let out = 0;
-    if (isALess) out = isZeroForOne ? val * price : val / price;
-    else out = isZeroForOne ? val * price : val / price;
+    // Lưu ý: Logic giá này phụ thuộc vào Tick hiện tại, trong thực tế cần chính xác hơn
+    // Nhưng với demo thì tạm chấp nhận P = 1.0001^tick
+    if (isZeroForOne) {
+        // Đổi T0 -> T1
+        out = val * price; // (hoặc / price tùy thuộc vào cách sort token của bạn, ở đây giả sử thuận)
+    } else {
+        // Đổi T1 -> T0
+        out = val / price;
+    }
     setEstimatedOut(out.toFixed(6));
   }, [amount, currentTick, isZeroForOne]);
 
   const handleSwap = async () => {
-    if(!signer) return;
+    if(!signer) return alert("Please connect wallet");
     setLoading(true);
     try {
         const { currency0, currency1, isALess } = getSortedTokens();
@@ -70,27 +81,88 @@ const Swap = ({ signer, provider }) => {
     setLoading(false);
   };
 
+  // --- STYLES MỚI (INLINE CHO GỌN) ---
+  const styles = {
+    container: { display: 'flex', justifyContent: 'center', paddingTop: '20px' },
+    card: { width: '400px', padding: '12px', borderRadius: '16px', background: '#13151a', border: '1px solid #222', boxShadow: '0 0 20px rgba(0,0,0,0.3)' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', padding: '0 8px' },
+    title: { margin: 0, fontSize: '18px', fontWeight: 600, color: 'white' },
+    tickBadge: { fontSize: '12px', background: 'rgba(255,255,255,0.1)', color: '#888', padding: '4px 8px', borderRadius: '8px', fontFamily: 'monospace' },
+    
+    inputBox: { background: '#1b1e24', borderRadius: '12px', padding: '16px', marginBottom: '4px', border: '1px solid #292c33' },
+    label: { fontSize: '13px', color: '#98a1c0', marginBottom: '8px', display: 'block' },
+    inputRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    input: { background: 'transparent', border: 'none', fontSize: '28px', color: 'white', width: '60%', outline: 'none', padding: 0 },
+    tokenBadge: { background: '#ff007a', padding: '6px 12px', borderRadius: '16px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '16px', boxShadow: '0 2px 8px rgba(255, 0, 122, 0.4)' },
+    tokenBadgeInactive: { background: '#2c2f36', padding: '6px 12px', borderRadius: '16px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '16px', border: '1px solid #444' },
+    
+    switchContainer: { height: '0px', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
+    switchBtn: { width: '32px', height: '32px', borderRadius: '50%', background: '#222', border: '4px solid #13151a', color: '#fff', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '16px' },
+    
+    mainBtn: { width: '100%', padding: '16px', marginTop: '10px', borderRadius: '16px', border: 'none', background: '#ff007a', color: 'white', fontSize: '18px', fontWeight: 600, cursor: 'pointer' }
+  };
+
   return (
-    <div style={{display:'flex', justifyContent:'center'}}>
-        <div className="uni-card">
-            <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
-                <h2>Swap Tokens</h2>
-                <span className="tick-badge">Tick: {currentTick}</span>
+    <div style={styles.container}>
+        <div style={styles.card}>
+            {/* Header */}
+            <div style={styles.header}>
+                <h2 style={styles.title}>Swap</h2>
+                <span style={styles.tickBadge}>Tick: {currentTick ?? '...'}</span>
             </div>
-            <div className="input-group">
-                <span className="label-text">You Pay</span>
-                <input className="uni-input" type="number" value={amount} onChange={e=>setAmount(e.target.value)} />
-                <span style={{float:'right', marginTop:'-35px', marginRight:'10px', fontWeight:'bold'}}>{isZeroForOne ? 'TOKEN A' : 'TOKEN B'}</span>
+
+            {/* INPUT 1: YOU PAY */}
+            <div style={styles.inputBox}>
+                <span style={styles.label}>You pay</span>
+                <div style={styles.inputRow}>
+                    <input 
+                        style={styles.input} 
+                        type="number" 
+                        placeholder="0"
+                        value={amount} 
+                        onChange={e=>setAmount(e.target.value)} 
+                    />
+                    <div style={styles.tokenBadge}>
+                         {/* Icon giả lập */}
+                        <div style={{width:'20px', height:'20px', background:'white', borderRadius:'50%'}}></div>
+                        {isZeroForOne ? 'TOKEN A' : 'TOKEN B'}
+                    </div>
+                </div>
+                <div style={{fontSize:'12px', color:'#555', marginTop:'5px'}}>$ --</div>
             </div>
-            <div style={{textAlign:'center', margin:'-15px 0 15px 0'}}>
-                <button onClick={()=>setIsZeroForOne(!isZeroForOne)} className="btn-small" style={{background:'#222', color:'white'}}>↓</button>
+
+            {/* SWITCH BUTTON (Nằm giữa 2 ô) */}
+            <div style={styles.switchContainer}>
+                <button style={styles.switchBtn} onClick={()=>setIsZeroForOne(!isZeroForOne)}>↓</button>
             </div>
-            <div className="input-group">
-                <span className="label-text">Receive (Est.)</span>
-                <input className="uni-input" type="text" readOnly value={estimatedOut} style={{color:'#888'}} />
-                <span style={{float:'right', marginTop:'-35px', marginRight:'10px', fontWeight:'bold'}}>{isZeroForOne ? 'TOKEN B' : 'TOKEN A'}</span>
+
+            {/* INPUT 2: RECEIVE */}
+            <div style={styles.inputBox}>
+                <span style={styles.label}>You receive</span>
+                <div style={styles.inputRow}>
+                    <input 
+                        style={{...styles.input, color: '#888'}} 
+                        type="text" 
+                        readOnly 
+                        value={estimatedOut} 
+                        placeholder="0.00"
+                    />
+                    <div style={styles.tokenBadgeInactive}>
+                        <div style={{width:'20px', height:'20px', background:'#555', borderRadius:'50%'}}></div>
+                        {isZeroForOne ? 'TOKEN B' : 'TOKEN A'}
+                    </div>
+                </div>
+                <div style={{fontSize:'12px', color:'#555', marginTop:'5px'}}>$ --</div>
             </div>
-            <button className="btn btn-primary" onClick={handleSwap} disabled={loading}>{loading ? "Swapping..." : "Swap Now"}</button>
+
+            {/* ACTION BUTTON */}
+            <button 
+                style={{...styles.mainBtn, opacity: loading ? 0.7 : 1}} 
+                onClick={handleSwap} 
+                disabled={loading}
+            >
+                {loading ? "Swapping..." : "Swap"}
+            </button>
         </div>
     </div>
   );

@@ -142,3 +142,20 @@ body {
   border-radius: 6px;
   margin-left: 8px;
 }
+
+/* Thêm vào cuối file App.css */
+.btn-small {
+  padding: 10px 5px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-size: 13px;
+}
+.btn-small:hover {
+  opacity: 0.8;
+}
+.btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

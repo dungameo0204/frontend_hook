@@ -5,12 +5,12 @@ export const ADDRESSES = {
     SWAP_ROUTER: "0x9B6b46e2c869aa39918Db7f52f5557FE577B6eEe",
     
     // Contracts của bạn
-    HOOK: "0x6516F826230fD1e14457A1DD1833F9Ad51aEFfc0", 
+    HOOK: "0x3db1d799191009c27a88D5Ea3C34EaCcec41BFc0", 
     POOL_READER: "0xaf60b5ad63380f6998dadfc6175a3baaccf2b682", 
 
     // Tokens
-    TOKEN_A: "0x1EE88FcB5048e2Aa6125050EE9B5fB719C3BF95a",
-    TOKEN_B: "0xC64Aa5AfFa3624a63E6ca054472608885c122Ade",
+    TOKEN_A: "0xbAF2A40E52745a008deD548A99D0B92550b54B64",
+    TOKEN_B: "0xEb631ce13729Ad868D133cB42671061F128bf148",
 };
 
 export const ABIS = {
@@ -24,6 +24,9 @@ export const ABIS = {
     ],
     HOOK: [
         "function earned((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, int24 tickLower, int24 tickUpper, address owner, bytes32 salt) external view returns (uint256)"
+    ],
+    SWAP: [
+        "function swap((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params, (bool takeClaims, bool settleUsingBurn) testSettings, bytes hookData) external payable returns (int256 delta0, int256 delta1)"
     ],
     POOL_READER: [
         "function getSlot0((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key) external view returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee)"
