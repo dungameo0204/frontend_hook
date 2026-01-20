@@ -87,7 +87,7 @@ const Swap = ({ signer, provider }) => {
     card: { width: '400px', padding: '12px', borderRadius: '16px', background: '#13151a', border: '1px solid #222', boxShadow: '0 0 20px rgba(0,0,0,0.3)' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', padding: '0 8px' },
     title: { margin: 0, fontSize: '18px', fontWeight: 600, color: 'white' },
-    tickBadge: { fontSize: '12px', background: 'rgba(255,255,255,0.1)', color: '#888', padding: '4px 8px', borderRadius: '8px', fontFamily: 'monospace' },
+    tickBadge: { fontSize: '12px', background:'#1a3b1a', color: '#4caf50', padding: '4px 8px', borderRadius: '8px', fontFamily: 'monospace' },
     
     inputBox: { background: '#1b1e24', borderRadius: '12px', padding: '16px', marginBottom: '4px', border: '1px solid #292c33' },
     label: { fontSize: '13px', color: '#98a1c0', marginBottom: '8px', display: 'block' },
