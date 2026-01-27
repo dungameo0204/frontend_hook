@@ -85,21 +85,29 @@ const Liquidity = ({ signer, provider, walletAddress, onConnect, positions, setP
     calculateLiquidityAndPair(amount, selectedToken === 0, minPrice, maxPrice);
   }, [amount, minPrice, maxPrice, selectedToken, currentTick]);
 
-  // --- 3. ADD LIQUIDITY (CÓ LOGIC CỘNG DỒN) ---
+  // --- 3. ADD LIQUIDITY (FIX: CHECK SỐ DƯ TRƯỚC & SAU) ---
   const handleAddLiquidity = async () => {
     if (!signer) return alert("Vui lòng kết nối ví!");
     if (liquidityToMint === 0n) {
-        alert("⚠️ Lỗi logic Uniswap: Khoảng giá này không chấp nhận Token bạn đang chọn.\n\n- Nếu khoảng giá < Tick hiện tại: Hãy chọn Token 1.\n- Nếu khoảng giá > Tick hiện tại: Hãy chọn Token 0.");
+        alert("⚠️ Lỗi logic Uniswap: Khoảng giá này không chấp nhận Token bạn đang chọn.");
         return;
     }
     setLoading(true);
     try {
       const { currency0, currency1 } = getSortedTokens();
       const routerAddress = ADDRESSES.MODIFY_LIQUIDITY_ROUTER;
-      const t0 = new ethers.Contract(currency0, ABIS.ERC20, signer);
-      const t1 = new ethers.Contract(currency1, ABIS.ERC20, signer);
-      await (await t0.approve(routerAddress, ethers.MaxUint256)).wait();
-      await (await t1.approve(routerAddress, ethers.MaxUint256)).wait();
+      
+      // Khởi tạo Contract Token để check số dư
+      const t0Contract = new ethers.Contract(currency0, ABIS.ERC20, signer);
+      const t1Contract = new ethers.Contract(currency1, ABIS.ERC20, signer);
+
+      // --- BƯỚC 1: SNAPSHOT SỐ DƯ TRƯỚC KHI NẠP ---
+      const balance0Before = await t0Contract.balanceOf(walletAddress);
+      const balance1Before = await t1Contract.balanceOf(walletAddress);
+
+      // Approve & Gửi Transaction
+      await (await t0Contract.approve(routerAddress, ethers.MaxUint256)).wait();
+      await (await t1Contract.approve(routerAddress, ethers.MaxUint256)).wait();
 
       const abiCoder = new ethers.AbiCoder();
       const salt = ethers.keccak256(abiCoder.encode(["string"], [POSITION_NAME]));
@@ -113,42 +121,49 @@ const Liquidity = ({ signer, provider, walletAddress, onConnect, positions, setP
       
       console.log("Sending Tx...");
       const tx = await router.modifyLiquidity(poolKey, paramsArray, "0x");
-      await tx.wait();
-      
-      // --- LOGIC CỘNG DỒN (MERGE) BẮT ĐẦU TỪ ĐÂY ---
-      
-      // 1. Chuẩn bị dữ liệu mới
-      const amount0ToAdd = selectedToken === 0 ? amount : calculatedOtherAmount;
-      const amount1ToAdd = selectedToken === 1 ? amount : calculatedOtherAmount;
+      await tx.wait(); // Đợi blockchain xác nhận
 
-      // 2. Tìm xem đã có vị thế nào trùng Tick chưa
+      // --- BƯỚC 2: SNAPSHOT SỐ DƯ SAU KHI NẠP ---
+      const balance0After = await t0Contract.balanceOf(walletAddress);
+      const balance1After = await t1Contract.balanceOf(walletAddress);
+
+      // --- BƯỚC 3: TÍNH TOÁN SỐ THỰC TẾ BỊ TRỪ ---
+      // Số dư Cũ - Số dư Mới = Số đã tiêu
+      const actualAmount0 = balance0Before - balance0After;
+      const actualAmount1 = balance1Before - balance1After;
+
+      console.log("Thực tế trừ T0:", ethers.formatEther(actualAmount0));
+      console.log("Thực tế trừ T1:", ethers.formatEther(actualAmount1));
+
+      // --- CẬP NHẬT GIAO DIỆN ---
+      const displayAmount0Real = parseFloat(ethers.formatEther(actualAmount0)).toFixed(4);
+      const displayAmount1Real = parseFloat(ethers.formatEther(actualAmount1)).toFixed(4);
+
+      // Tìm xem đã có vị thế nào trùng Tick chưa
       const existingIndex = positions.findIndex(p => p.min === minPrice && p.max === maxPrice);
-
       let updatedPositions;
 
       if (existingIndex !== -1) {
-          // TRƯỜNG HỢP 1: Đã tồn tại -> Cộng dồn
-          console.log("🔄 Phát hiện vị thế trùng, đang cộng dồn...");
+          // Cộng dồn vào vị thế cũ
+          console.log("🔄 Cộng dồn vào vị thế cũ...");
           updatedPositions = [...positions];
           const oldPos = updatedPositions[existingIndex];
 
           updatedPositions[existingIndex] = {
               ...oldPos,
-              // Cộng lượng token hiển thị (Parse float để cộng số, rồi toFixed lại string)
-              displayAmount0: (parseFloat(oldPos.displayAmount0) + parseFloat(amount0ToAdd)).toFixed(4),
-              displayAmount1: (parseFloat(oldPos.displayAmount1) + parseFloat(amount1ToAdd)).toFixed(4),
-              // Cộng lượng Liquidity (Dùng BigInt vì số rất lớn)
+              // Cộng số mới (Real) vào số cũ
+              displayAmount0: (parseFloat(oldPos.displayAmount0) + parseFloat(displayAmount0Real)).toFixed(4),
+              displayAmount1: (parseFloat(oldPos.displayAmount1) + parseFloat(displayAmount1Real)).toFixed(4),
               liquidityL: (BigInt(oldPos.liquidityL) + liquidityToMint).toString(),
-              // Giữ nguyên reward cũ (hoặc reset tùy logic contract, ở đây giữ nguyên để check sau)
           };
       } else {
-          // TRƯỜNG HỢP 2: Chưa tồn tại -> Thêm mới
-          console.log("✨ Tạo vị thế mới...");
+          // Tạo mới
+          console.log("✨ Tạo vị thế mới với số liệu thực...");
           const newPos = {
             id: Date.now(),
             min: minPrice, max: maxPrice,
-            displayAmount0: amount0ToAdd,
-            displayAmount1: amount1ToAdd,
+            displayAmount0: displayAmount0Real, // Dùng số thực tế
+            displayAmount1: displayAmount1Real, // Dùng số thực tế
             liquidityL: liquidityToMint.toString(), 
             salt: salt,
             reward: '0'
@@ -156,11 +171,10 @@ const Liquidity = ({ signer, provider, walletAddress, onConnect, positions, setP
           updatedPositions = [newPos, ...positions];
       }
 
-      // 3. Lưu lại
       setPositions(updatedPositions);
       localStorage.setItem('positions', JSON.stringify(updatedPositions));
       
-      alert("✅ Thành công!");
+      alert(`✅ Thành công!\nThực tế đã nạp:\n- Token 0: ${displayAmount0Real}\n- Token 1: ${displayAmount1Real}`);
     } catch (e) { 
         console.error(e);
         alert("Lỗi: " + (e.reason || e.message)); 
@@ -259,8 +273,8 @@ const Liquidity = ({ signer, provider, walletAddress, onConnect, positions, setP
                <input type="number" value={amount} onChange={e=>setAmount(e.target.value)}/>
             </div>
             <div className="info-box">
-                <div className="info-row"><span>Cần nạp T0:</span><strong>{selectedToken===0 ? amount : calculatedOtherAmount}</strong></div>
-                <div className="info-row"><span>Cần nạp T1:</span><strong>{selectedToken===1 ? amount : calculatedOtherAmount}</strong></div>
+                <div className="info-row"><span>Cần nạp T0 (Ước tính):</span><strong>{selectedToken===0 ? amount : calculatedOtherAmount}</strong></div>
+                <div className="info-row"><span>Cần nạp T1 (Ước tính):</span><strong>{selectedToken===1 ? amount : calculatedOtherAmount}</strong></div>
             </div>
             {!walletAddress ? 
                <button className="btn-main" onClick={onConnect}>Kết nối ví</button> : 
